@@ -1,1 +1,2 @@
-import trainer
+import vrtrainer.trainer
+trainer = vrtrainer.trainer
