@@ -1,22 +1,37 @@
 import time
 import torch
+from torch.utils.data.dataloader import DataLoader
+from torch.utils.data.dataset import Dataset
+import torch.optim as optim
+
+
+
 
 class trainerConfig():
     def __init__(self,**kwargs):
-        self.epochs = 1
         self.ckpt_pth = 'model'
         self.print_interval = None
         self.save_interaval = None
+        self.batch_size = 32
+        self.dloader_workers = 0
 
         self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-
+        
         for k,v in kwargs.items():
             setattr(self, k, v)
 
 
 
 class Trainer():
-    def __init__(self,model,loss_fn,optimizer,train_data,test_data,config: trainerConfig):
+    def __init__(self,
+                model: torch.nn.Module,
+                loss_fn,
+                config: trainerConfig,
+                optimizer: optim.Optimizer = None,
+                train_data: Dataset = None,
+                test_data: Dataset = None,
+                epochs: int = None
+            ):
         '''
             args:
                 model - instance of model to train
@@ -32,14 +47,23 @@ class Trainer():
         self.train_data = train_data
         self.test_data = test_data
         self.config = config
+        self.epochs = epochs
+
 
     def train(self):
+        assert self.train_data is not None, "Must have included train data to call train()"
         model = self.model
         last_time = time.monotonic()
         running_loss = 0.0
-
+        data = DataLoader(
+            self.train_data,
+            batch_size=self.config.batch_size,
+            num_workers = self.config.num_workers
+        )
         for epoch in range(self.config.epochs):
-            for it, (features, targets) in enumerate(self.train_data):
+
+
+            for it, (features, targets) in enumerate(data):
                 current_time = time.monotonic()
                 delta_time = current_time - last_time
                 last_time = current_time          
@@ -63,10 +87,16 @@ class Trainer():
                     torch.save(model,pth)
     
     def test(self):
+        assert self.test_data is not None, "Must have included test data to perform test"
         model = self.model
         running_loss = 0.0
+        data = DataLoader(
+            self.test_data,
+            batch_size=self.config.batch_size,
+            num_workers = self.config.num_workers
+        )
 
-        for features, targets in self.test_data:
+        for features, targets in data:
             y_hat = model(features)
             running_loss += self.loss_fn(y_hat,targets).item()
     
