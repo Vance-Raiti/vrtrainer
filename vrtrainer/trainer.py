@@ -39,7 +39,8 @@ class Trainer():
                 optimizer - instance of optimizer
                 train_data - iterable dataloder object whose __getitem__() method
                     will return a (features, targets) tuple
-                config - instance of vrtrainer.trainerConfig
+                config - instance of vrtrainer.trainerConfig. Contains parameters
+                    for quality-of-life and performance
         '''
         self.model = model
         self.loss_fn = loss_fn
@@ -61,8 +62,6 @@ class Trainer():
             num_workers = self.config.num_workers
         )
         for epoch in range(self.config.epochs):
-
-
             for it, (features, targets) in enumerate(data):
                 current_time = time.monotonic()
                 delta_time = current_time - last_time
